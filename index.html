@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Examen de Enfermería Geriátrica</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f1f5f9;
+        }
+
+        .option-card {
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: 2px solid #334155;
+        }
+
+        .option-card:hover {
+            border-color: #6366f1;
+            background-color: #1e293b;
+        }
+
+        .option-card.selected {
+            border-color: #6366f1;
+            background-color: #312e81;
+        }
+
+        .option-card.correct {
+            border-color: #22c55e;
+            background-color: #064e3b;
+        }
+
+        .option-card.incorrect {
+            border-color: #ef4444;
+            background-color: #7f1d1d;
+        }
+
+        .progress-bar {
+            transition: width 0.4s ease-in-out;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <!-- Header / Stats -->
+    <div class="max-w-2xl w-full mb-6 grid grid-cols-3 gap-4">
+        <div class="bg-slate-800 p-4 rounded-xl text-center border border-slate-700">
+            <p class="text-xs uppercase tracking-wider text-slate-400">Pregunta</p>
+            <p id="current-index" class="text-2xl font-bold">1 / 20</p>
+        </div>
+        <div class="bg-slate-800 p-4 rounded-xl text-center border border-slate-700">
+            <p class="text-xs uppercase tracking-wider text-green-400">Acertadas</p>
+            <p id="correct-count" class="text-2xl font-bold text-green-500">0</p>
+        </div>
+        <div class="bg-slate-800 p-4 rounded-xl text-center border border-slate-700">
+            <p class="text-xs uppercase tracking-wider text-red-400">Erróneas</p>
+            <p id="wrong-count" class="text-2xl font-bold text-red-500">0</p>
+        </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="max-w-2xl w-full bg-slate-800 h-2 rounded-full mb-8 overflow-hidden">
+        <div id="progress" class="progress-bar bg-indigo-500 h-full" style="width: 5%"></div>
+    </div>
+
+    <!-- Main Game Container -->
+    <main id="game-container" class="max-w-2xl w-full bg-slate-800 rounded-2xl p-8 shadow-2xl border border-slate-700">
+        <div id="question-screen">
+            <h2 id="question-text" class="text-xl md:text-2xl font-semibold mb-8 leading-relaxed">
+                Cargando pregunta...
+            </h2>
+            <div id="options-container" class="space-y-4">
+                <!-- Options injected here -->
+            </div>
+            <button id="next-btn" class="mt-8 w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl transition hidden">
+                Siguiente Pregunta
+            </button>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="hidden text-center">
+            <h2 class="text-3xl font-bold mb-4">¡Examen Finalizado!</h2>
+            <div class="text-6xl mb-6">📊</div>
+            <p id="final-stats" class="text-lg text-slate-300 mb-8"></p>
+            <button onclick="location.reload()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-8 rounded-xl transition">
+                Reiniciar Examen
+            </button>
+        </div>
+    </main>
+
+    <script>
+        const questions = [
+            {
+                id: 59,
+                q: "Marjorie Warren fue:",
+                options: [
+                    "una bióloga inglesa",
+                    "la primera referencia de la enfermera geriátrica",
+                    "creo la primera unidad de geriatra del reino unido",
+                    "baso su trabajo en el examen persona, la historia social, la potenciación de los cuidados de enfermería, rehabilitación precoz y trabajo en equipo",
+                    "B, C y D son verdaderas."
+                ],
+                correct: 4 // e
+            },
+            {
+                id: 60,
+                q: "Los fines de la sociedad española de enfermería geriatría y gerontológicos son:",
+                options: [
+                    "cuidar al anciano desde la lógica de un equipo integral en todas sus dimensiones",
+                    "favorecer el estudio y la divulgación del envejecimiento humano",
+                    "fomentar el desarrollo educativo de los enfermeros especialistas en geriatría",
+                    "agrupar a los enfermeros interesados en este campo, premiar y formaran la figura del enfermero en geriatría e impulsar acciones formativas e investigadoras"
+                ],
+                correct: 3 // d
+            },
+            {
+                id: 61,
+                q: "¿Cuáles han sido las tendencias de la conducta humana hacia los problemas de la ancianidad a lo largo de la historia?",
+                options: [
+                    "la tendencia ha sido la de priorizar estudios formativos a todas las capas sociales",
+                    "nunca ha evolucionado la conducta con los ancianos",
+                    "se han marcado 4 tendencias, la de supervivencia, la obligatoriedad moral y civica, la caritativa y la profesional",
+                    "se han marcado tres tendencias: la legislativa, la crueldad y la de paciencia",
+                    "no se han evidenciado ninguna tendencia"
+                ],
+                correct: 2 // c
+            },
+            {
+                id: 62,
+                q: "Podríamos definir un bueno y/o anciano como:",
+                options: [
+                    "una persona de mas de 65 años",
+                    "una persona jubilada",
+                    "una persona vieja con arrugas, canas, encorvada y lenta",
+                    "una persona con 10 años mas que tu",
+                    "todas las respuestas pueden ser valida, esta subjetivas al valorar el temido (viejo, anciano) hace difícil determinar a partir de cuando uno lo es."
+                ],
+                correct: 4 // e
+            },
+            {
+                id: 63,
+                q: "Según los criterios de ordenación de los servicios para la atención a las personas mayores Insalud 1995, se defiende cuatro tipos:",
+                options: [
+                    "persona mayor sana, enferma, obesa y disminuida",
+                    "persona mayor sana, enferma psiquiátrica y asocial",
+                    "persona mayor frágil, enferma, sana y dependiente",
+                    "persona mayor sana, enferma frágil, y paciente geriátrico",
+                    "persona mayor jubilada, trabajadora, atletica y sentimental"
+                ],
+                correct: 3 // d
+            },
+            {
+                id: 64,
+                q: "¿Modificó en algo que la OMS después de la 2ª Guerra mundial definiera la salud como el concepto bienestar físico, psíquico y social y no solo la ausencia de enfermedad?",
+                options: [
+                    "permitió que la orientaron de las ciencias de la salud no fueran únicamente curativas.",
+                    "aumento la dedicación curativa en el hombre",
+                    "no se modifico nada, había muchas heridas",
+                    "ninguna de las anteriores son ciertas",
+                    "la OMS no definió nada después de la 2ª Guerra mundial"
+                ],
+                correct: 0 // a
+            },
+            {
+                id: 65,
+                q: "Las capacidades de las personas va desapareciendo con la edad... en esta etapa de la vida la dimensión afectiva adquiere un valor especial para la calidad de vida:",
+                options: [
+                    "algunas veces puede pasar",
+                    "es cierta lo afirmación",
+                    "es falsa la afirmación",
+                    "nina pasa nada",
+                    "solo pasa en los ancianos con patología psiquiátrica"
+                ],
+                correct: 1 // b
+            },
+            {
+                id: 66,
+                q: "¿Cuál de los factores que se citan intervienen en el envejecimiento de la población?",
+                options: [
+                    "el descenso de la natalidad y el de la mortalidad infantil",
+                    "el descenso de la natalidad, el descenso de la mortalidad infantil, los movimientos migratorios y los avances tecnológicos.",
+                    "el descenso de la natalidad, el aumento de la mortalidad y los planes de persones holgados",
+                    "las migraciones, el descenso de la tasa de mortalidad y el cambio en los valores sociales."
+                ],
+                correct: 1 // b
+            },
+            {
+                id: 67,
+                q: "El aumento del promedio de edad de la población crea una serie de problemas en nuestra sociedad, estos son:",
+                options: [
+                    "la insuficiente cobertura social ligada al sistema de distribución de los recursos economicos",
+                    "el aumento de la demanda de servicios sociosanitarios por este estado de la población",
+                    "la transformación del rol social de las personas mayores de 65 años y el cambio de sus sistemas de valores",
+                    "todas son verdaderas"
+                ],
+                correct: 3 // d
+            },
+            {
+                id: 68,
+                q: "Los tres temores mas frecuentes en el anciano son:",
+                options: [
+                    "la soledad la probreza y la enfermedad",
+                    "la vivienda, los hijos y el trabajo",
+                    "el ocio, la religion y la cultura",
+                    "no tienen preocupaciones"
+                ],
+                correct: 0 // a
+            },
+            {
+                id: 69,
+                q: "Entendemos como esperanza de vida:",
+                options: [
+                    "el tiempo que esperamos vivir solamente",
+                    "la necesidad que tiene el hombre de calcular cuando va a morir",
+                    "el tiempo de vida esperada o estimada para un indicio de un grupo social en el momento de su nacimiento",
+                    "todas son falsas"
+                ],
+                correct: 2 // c
+            },
+            {
+                id: 70,
+                q: "¿Como es la pirámide de población en una sociedad muy desarrollada?",
+                options: [
+                    "no existen grandes diferencias con las menos desarrolladas",
+                    "la piramide tiene forma de uso con procos jóvenes y pocos mayores",
+                    "la piramide esta invertida, con escasa población joven y muchos mayores",
+                    "la piramide es cuadrada debido al ecosistema"
+                ],
+                correct: 2 // c
+            },
+            {
+                id: 71,
+                q: "Uno de los factores que intervienen en el envejecimiento de la población son los factores ambientales:",
+                options: [
+                    "si, especialmente en épocas de lluvias",
+                    "no, solo afectaría a residentes cercanos a zonas apadrinadas",
+                    "si, repercute en el hombre aumentando o no la duración de la vida y la calidad de la misma",
+                    "no, siempre que el ecosistema este protegido"
+                ],
+                correct: 2 // c
+            },
+            {
+                id: 72,
+                q: "Desde el punto de vista sanitario la primera causa de muerte en os ancianos es:",
+                options: [
+                    "cancer",
+                    "traumatismos",
+                    "enfermedades cardiovasculares",
+                    "enfermedades respiratorias"
+                ],
+                correct: 2 // c
+            },
+            {
+                id: 73,
+                q: "La principal enfermedad diagnostica en personas mayores 1993 es:",
+                options: [
+                    "diabetes",
+                    "traumatismos",
+                    "HTA",
+                    "hallus valgas"
+                ],
+                correct: 2 // c
+            },
+            {
+                id: 74,
+                q: "En nuestro pais la mayor parte de los cuidados a personas mayores son dados por los familiares del sexo femenino:",
+                options: [
+                    "falso, desde la importación de la mujer a la vida labora los cuidados son repartidos entre el hombre y la mujer",
+                    "verdadera, esta constituido por mujeres entre 45-69 años.",
+                    "verdadero el estado las financia para que cuiden a os mayores y atiendan las labores del hogar",
+                    "falso, los valores han cambiado y no dedican tiempo a los mayores"
+                ],
+                correct: 1 // b
+            },
+            {
+                id: 75,
+                q: "La ley 39/2006 de 14 de diciembre, de promoción de la autonomía personal y atención a las personas en situación de dependencia:",
+                options: [
+                    "es una ley dictada por la comunidad económica europea, para atender a los ancianos.",
+                    "es una ley promovida y garantizada por el estado con un contenido mínimo de derechos para todos los ciudadanos en cualquier parte del territorio español",
+                    "es una ley demanda de la comunidad autónoma de Andalucía",
+                    "es una ley que todavía no ha cumplido los tramites parlamentarios"
+                ],
+                correct: 1 // b
+            },
+            {
+                id: 76,
+                q: "Actualmente, la ayuda domiciliaria es una de las ofertas que mayor cobertura esta dando aunque aun siguen siendo insuficientes:",
+                options: [
+                    "verdadero",
+                    "falso",
+                    "se esta organizando y formando profesionales cualificados para iniciar la asistencia",
+                    "se esta discutiendo la mejor manera y donde iniciar el proyecto"
+                ],
+                correct: 0 // a
+            },
+            {
+                id: 77,
+                q: "La filosofía en torno a la vejez: añadir años a la vida, añadir salud a la vida y añadir vida a los años.",
+                options: [
+                    "es un razonamiento lógico",
+                    "no tiene ningún sentido",
+                    "debería ser solo una cuestión medica",
+                    "es una cuestión política"
+                ],
+                correct: 0 // a
+            },
+            {
+                id: 78,
+                q: "El envejecimiento es una sucesión de modificaciones morfológicas y psicológicas de carácter irreversible...",
+                options: [
+                    "es una de las definiciones existentes",
+                    "es una definición antigua",
+                    "es la definición del a academia de geriatra",
+                    "todas las anteriores son falsas"
+                ],
+                correct: 0 // a
+            }
+        ];
+
+        let currentQuestion = 0;
+        let correctAnswers = 0;
+        let wrongAnswers = 0;
+        let answered = false;
+
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const nextBtn = document.getElementById('next-btn');
+        const currentIndexLabel = document.getElementById('current-index');
+        const correctCountLabel = document.getElementById('correct-count');
+        const wrongCountLabel = document.getElementById('wrong-count');
+        const progressBar = document.getElementById('progress');
+        const questionScreen = document.getElementById('question-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const finalStats = document.getElementById('final-stats');
+
+        function loadQuestion() {
+            answered = false;
+            nextBtn.classList.add('hidden');
+            const qData = questions[currentQuestion];
+            
+            // UI Updates
+            questionText.innerText = `${qData.id}. ${qData.q}`;
+            currentIndexLabel.innerText = `${currentQuestion + 1} / ${questions.length}`;
+            progressBar.style.width = `${((currentQuestion + 1) / questions.length) * 100}%`;
+            
+            // Render Options
+            optionsContainer.innerHTML = '';
+            qData.options.forEach((opt, index) => {
+                const button = document.createElement('div');
+                button.className = 'option-card p-4 rounded-xl flex items-center gap-4';
+                button.innerHTML = `
+                    <span class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center font-bold text-sm shrink-0">
+                        ${String.fromCharCode(65 + index)}
+                    </span>
+                    <span class="text-md">${opt}</span>
+                `;
+                button.onclick = () => selectOption(index, button);
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        function selectOption(index, element) {
+            if (answered) return;
+            answered = true;
+            
+            const correctIndex = questions[currentQuestion].correct;
+            const options = optionsContainer.children;
+
+            if (index === correctIndex) {
+                element.classList.add('correct');
+                correctAnswers++;
+                correctCountLabel.innerText = correctAnswers;
+            } else {
+                element.classList.add('incorrect');
+                options[correctIndex].classList.add('correct');
+                wrongAnswers++;
+                wrongCountLabel.innerText = wrongAnswers;
+            }
+
+            nextBtn.classList.remove('hidden');
+        }
+
+        nextBtn.onclick = () => {
+            currentQuestion++;
+            if (currentQuestion < questions.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        };
+
+        function showResults() {
+            questionScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+            const score = Math.round((correctAnswers / questions.length) * 100);
+            finalStats.innerHTML = `
+                Has acertado <span class="text-green-500 font-bold">${correctAnswers}</span> preguntas de ${questions.length}.<br>
+                Tu puntuación final es del <span class="text-indigo-400 font-bold">${score}%</span>.
+            `;
+        }
+
+        // Init
+        loadQuestion();
+    </script>
+</body>
+</html>
